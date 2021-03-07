@@ -16,13 +16,14 @@ def downloadSkin(skinID):
     url = 'https://namemc.com/texture/' + skinID + ".png?v=2"
     print(url)
     r = requests.get(url, stream=True)
+    fileName = "minecraft_temp/current_skin.png"
     if(r.status_code == 200):
         #img.png is probably the file name, can likely be overriden
-        with open("minecraft_temp/current_skin.png", 'wb') as f:
+        with open(fileName, 'wb') as f:
             r.raw.decode_content = True
             
             shutil.copyfileobj(r.raw, f)
-    return "test"
+    return "url"
     
 
 def analyzeSkin(skin):
