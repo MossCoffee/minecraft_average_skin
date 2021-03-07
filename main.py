@@ -1,18 +1,28 @@
-if __name__ == "__main__":
-    main()
+import requests
+import shutil
 
 def populateIds():
-    output = ["steve", "bob", "sally"]
+    output = ["4febbfc99fc9fdf4"]
     #get list of all ids ever
     #this is probably a webtrawler?
     #only needs to be run once
     return output
 
 def downloadSkin(skinID):
+
     #download a single skin
     #www.minecraftskins.com or https://namemc.com
-    data = 0
-    return data
+     
+    url = 'https://namemc.com/texture/' + skinID + ".png?v=2"
+    print(url)
+    r = requests.get(url, stream=True)
+    if(r.status_code == 200):
+        #img.png is probably the file name, can likely be overriden
+        with open("img.png", 'wb') as f:
+            r.raw.decode_content = True
+            shutil.copyfileobj(r.raw, f)
+    return "test"
+    
 
 def analyzeSkin(skin):
     #returns the group that it belongs to 
@@ -59,21 +69,25 @@ def main():
     #www.minecraftskins.com or https://namemc.com
     #this is probably a webtrawler?
     #this returns a bunch of minecraft skins somehow
+    
     idList = populateIds()
     for id in idList:
         skin = downloadSkin(id) #This is passed some form of id that lets it download the skin
+        print(skin)
         #Analyze the skin
         #where the magic happens
-        groupId = analyzeSkin(skin)
+        #groupId = analyzeSkin(skin)
         #Skins are sorted into groups and then averaged on to their group's collected image
-        mergeSkin(skin, groupId)
+        #mergeSkin(skin, groupId)
 
 
     #Now we've got the skins merged into groups, 
     #We need an interface for making the skin
-    customSkinData = [0, 1, 1, 0]
+    #customSkinData = [0, 1, 1, 0]
     #Skin image is a png file of the created skin
-    skinImage = skinMixer(customSkinData)
+    #skinImage = skinMixer(customSkinData)
 
     #then we make a web interface to tie it all together!
 
+if __name__ == "__main__":
+    main()
