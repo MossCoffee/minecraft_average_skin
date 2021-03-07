@@ -18,8 +18,9 @@ def downloadSkin(skinID):
     r = requests.get(url, stream=True)
     if(r.status_code == 200):
         #img.png is probably the file name, can likely be overriden
-        with open("img.png", 'wb') as f:
+        with open("minecraft_temp/current_skin.png", 'wb') as f:
             r.raw.decode_content = True
+            
             shutil.copyfileobj(r.raw, f)
     return "test"
     
