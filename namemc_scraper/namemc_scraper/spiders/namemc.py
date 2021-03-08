@@ -7,5 +7,9 @@ class NamemcSpider(scrapy.Spider):
     start_urls = ['https://namemc.com/minecraft-skins/random']
 
     def parse(self, response):
-        
-        pass
+        ids = response.xpath('//a[contains(@href,"/skin/")]/@href').getall() #[contains(@href,"/skin/*")]
+        #match everything with <a href="/skin/*">
+        parsedIds = []
+        for id in ids:
+            parsedIds.append(id.split("/skin/", 1)[1])
+        return {"ids": parsedIds}
