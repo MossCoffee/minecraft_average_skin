@@ -129,3 +129,5 @@ dmypy.json
 .pyre/
 img.png
 *.png
+namemc_scraper/namemc_scraper/spiders/items.json
+namemc_scraper/namemc_scraper/spiders/ids.json
