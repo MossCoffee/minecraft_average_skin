@@ -12,31 +12,33 @@ class NamemcSpider(scrapy.Spider):
     start_urls = ['https://namemc.com/minecraft-skins/random']
 
     def parse(self, response):
+        print("parsing...")
         ids = response.xpath('//a[contains(@href,"/skin/")]/@href').getall() #[contains(@href,"/skin/*")]
-        #match everything with <a href="/skin/*">
-        parsedIds = []
         for id in ids:
             parsedID = id.split("/skin/", 1)[1]
-            #print(parsedID)
-            #parsedIds.append(parsedID)
             id_dict[parsedID] = parsedID
-        return {"ids": parsedIds}
+        return scrapy.Request("https://namemc.com/minecraft-skins/random", callback=self.reload_url, dont_filter=True)
+
+
+    def reload_url(self, response):
+        max_ids= 100
+        if(len(id_dict) < max_ids): 
+            yield self.parse(response)
+        else:
+            self.writeOutIDs()
+            return
+    
+    def writeOutIDs(self):
+        with open('id_file', 'w') as f:
+         
+         for id in id_dict:
+          f.write(id + '\n')
 
 process = CrawlerProcess(settings={
     "FEEDS": {
-        "ids.json": {"format": "json"}, #this is somehow saving the ids out??
+        "ids.json": {"format": "json"},
     },
 })
 
 process.crawl(NamemcSpider)
-for x in range(2):
-    process.start() # the script will block here until the crawling is finished
-
-with open('id_file', 'w') as f:
-    for id in id_dict:
-        f.write(id + '\n')
-
-#this crawler now gets run by running the python script
-#get ids back from crawler
-#store ids in set > this is already happening
-#save set to file
+process.start()
