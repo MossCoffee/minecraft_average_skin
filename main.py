@@ -29,7 +29,7 @@ def downloadSkin(skinID):
 
 def analyzeSkin(skin):
     #returns the group that it belongs to 
-    #By primary color, eye shape
+    #By primary color, eye shap
 
     #Figure out the primary color
     
@@ -58,20 +58,26 @@ def mergeSkin(skin, groupId):
     return
     
 def skinMixer(filename, composite, acc):
+    output = Image.open("output.png")
     img = Image.open(filename)
-    img.convert("RGBA")
+    #img.convert("RGBA")
+    #output.convert("RGBA")
+    #img.resize(output)
+
     #override file by default
-    if acc == 0:
-        composite.paste(img)
-    else:
-        print("test")
-        #fill this in later
-        
+    
+    #override file by default
+    #print(img.mode)
+   # print(output.mode)
+    alpha = 1 / acc
+    #I don't think this is working properly
+    #fill this in later
     #Skin data contains a num (0-1) for each generated image
     #Take that image & scale basied on the sum of transparentcies
     #Should create a completely opaque image
-    return #a png of a minecraft skin based on the data
-
+    Image.blend(output, img, 1).show()
+    return Image.blend(output, img,  alpha=alpha)
+   
 def main():
     #Make the "average" skin amonugst skins on skindex
     #this will eventually be a webapp (probably written rails in ruby?)
@@ -87,8 +93,7 @@ def main():
 
     #open output image
     output = Image.open("output.png")
-    output.convert("RGBA")
-    acc = 0
+    acc = 1
     print(idList)
     for id in idList:
         #skin = downloadSkin(id) #This is passed some form of id that lets it download the skin
@@ -96,7 +101,7 @@ def main():
         #where the magic happens
         #groupId = analyzeSkin(skin)
         skin = "minecraft_temp/" + str(id) + ".png"
-        skinMixer(skin, output, acc) # pass f in in
+        output = skinMixer(skin, output, acc) # pass f in in
         acc += 1
         break
         #Skins are sorted into groups and then averaged on to their group's collected image
