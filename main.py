@@ -1,5 +1,6 @@
 import requests
 import shutil
+from PIL import Image
 
 def populateIds():
     output = []
@@ -23,7 +24,7 @@ def downloadSkin(skinID):
         with open(fileName, 'wb') as f:
             r.raw.decode_content = True
             shutil.copyfileobj(r.raw, f)
-    return "url"
+    return str(skinID) + ".png"
     
 
 def analyzeSkin(skin):
@@ -56,10 +57,19 @@ def mergeSkin(skin, groupId):
         skin = groupId
     return
     
-def skinMixer(skindata):
+def skinMixer(filename, composite, acc):
+    img = Image.open(filename)
+    img.convert("RGBA")
+    #override file by default
+    if acc == 0:
+        composite.paste(img)
+    else:
+        print("test")
+        #fill this in later
+        
     #Skin data contains a num (0-1) for each generated image
     #Take that image & scale basied on the sum of transparentcies
-    #Should create a completely opake image
+    #Should create a completely opaque image
     return #a png of a minecraft skin based on the data
 
 def main():
@@ -73,17 +83,26 @@ def main():
     #this returns a bunch of minecraft skins somehow
     
     idList = populateIds()
+    #to do: make a copy of the starting file 
+
+    #open output image
+    output = Image.open("output.png")
+    output.convert("RGBA")
+    acc = 0
     print(idList)
     for id in idList:
-        skin = downloadSkin(id) #This is passed some form of id that lets it download the skin
-        print(skin)
+        #skin = downloadSkin(id) #This is passed some form of id that lets it download the skin
         #Analyze the skin
         #where the magic happens
         #groupId = analyzeSkin(skin)
+        skin = "minecraft_temp/" + str(id) + ".png"
+        skinMixer(skin, output, acc) # pass f in in
+        acc += 1
+        break
         #Skins are sorted into groups and then averaged on to their group's collected image
         #mergeSkin(skin, groupId)
 
-
+    output.save("output.png", "png")
     #Now we've got the skins merged into groups, 
     #We need an interface for making the skin
     #customSkinData = [0, 1, 1, 0]
