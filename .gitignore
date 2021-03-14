@@ -132,3 +132,4 @@ img.png
 namemc_scraper/namemc_scraper/spiders/items.json
 namemc_scraper/namemc_scraper/spiders/ids.json
 namemc_scraper/namemc_scraper/spiders/id_file
+test.py

@@ -58,25 +58,17 @@ def mergeSkin(skin, groupId):
     return
     
 def skinMixer(filename, composite, acc):
-    output = Image.open("output.png")
-    img = Image.open(filename)
-    #img.convert("RGBA")
-    #output.convert("RGBA")
-    #img.resize(output)
-
-    #override file by default
-    
-    #override file by default
-    #print(img.mode)
-   # print(output.mode)
+    img = Image.open(filename).convert("RGBA")
+    (width, height) = (img.width, img.height)
+    composite = composite.resize((width,height))
     alpha = 1 / acc
     #I don't think this is working properly
     #fill this in later
     #Skin data contains a num (0-1) for each generated image
     #Take that image & scale basied on the sum of transparentcies
     #Should create a completely opaque image
-    Image.blend(output, img, 1).show()
-    return Image.blend(output, img,  alpha=alpha)
+    Image.blend(composite, img, alpha=alpha).show()
+    return Image.blend(composite, img, alpha=alpha)
    
 def main():
     #Make the "average" skin amonugst skins on skindex
@@ -92,7 +84,7 @@ def main():
     #to do: make a copy of the starting file 
 
     #open output image
-    output = Image.open("output.png")
+    output = Image.open("output.png").convert("RGBA")
     acc = 1
     print(idList)
     for id in idList:
