@@ -35,9 +35,7 @@ class NamemcSpider(scrapy.Spider):
           f.write(id + '\n')
 
 process = CrawlerProcess(settings={
-    "FEEDS": {
-        "ids.json": {"format": "json"},
-    },
+    "FEEDS": {},
 })
 
 process.crawl(NamemcSpider)
