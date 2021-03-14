@@ -2,10 +2,12 @@ import requests
 import shutil
 
 def populateIds():
-    output = ["4febbfc99fc9fdf4"]
-    #get list of all ids ever
-    #this is probably a webtrawler?
-    #only needs to be run once
+    output = []
+    fileName = "id_file"
+    with open(fileName, 'r') as f:
+        for line in f:
+            output.append(line.rstrip())
+
     return output
 
 def downloadSkin(skinID):
@@ -14,14 +16,12 @@ def downloadSkin(skinID):
     #www.minecraftskins.com or https://namemc.com
      
     url = 'https://namemc.com/texture/' + skinID + ".png?v=2"
-    print(url)
     r = requests.get(url, stream=True)
-    fileName = "minecraft_temp/current_skin.png"
+    fileName = "minecraft_temp/" + str(skinID) + ".png"
     if(r.status_code == 200):
         #img.png is probably the file name, can likely be overriden
         with open(fileName, 'wb') as f:
             r.raw.decode_content = True
-            
             shutil.copyfileobj(r.raw, f)
     return "url"
     
@@ -73,6 +73,7 @@ def main():
     #this returns a bunch of minecraft skins somehow
     
     idList = populateIds()
+    print(idList)
     for id in idList:
         skin = downloadSkin(id) #This is passed some form of id that lets it download the skin
         print(skin)
