@@ -1,6 +1,21 @@
 import requests
 import shutil
 from PIL import Image
+import colorsys
+from enum import Enum
+
+class Color(Enum):
+    BLACK = 0
+    WHITE = 1
+    GREY = 2
+    RED = 3
+    ORANGE = 4
+    YELLOW = 5
+    GREEN = 6
+    CYAN = 7
+    BLUE = 8
+    MAGENTA = 9
+    MULTI = 10
 
 def populateIds():
     output = []
@@ -27,7 +42,24 @@ def downloadSkin(skinID):
     return str(skinID) + ".png"
 
 def getColorGroup(pixel):
-    return pixel
+    ((R, G, B)) = pixel
+    #print("R: " + str(R) + " G: " + str(G) + " B: " + str(B))
+    ((h,l,s)) = colorsys.rgb_to_hls(R/255, G/255, B/255)
+    h = h * 360
+    #print("h: " + str(h) + " l: " + str(l) + " s: " + str(s))
+    if l < .2: return Color.BLACK
+    if l > .8: return Color.WHITE
+    
+    if s < 0.25: return Color.GREY
+
+    if h < 15: return Color.RED
+    if h < 38: return Color.ORANGE
+    if h < 75: return Color.YELLOW
+    if h < 150: return Color.GREEN
+    if h < 210: return Color.CYAN
+    if h < 270: return Color.BLUE
+    if h < 330: return Color.MAGENTA
+    return Color.RED
 
 def getColorFromSubsection(img, x, y, height, width):
     pixelGroups = {}
@@ -41,13 +73,20 @@ def getColorFromSubsection(img, x, y, height, width):
 
     output = -1
     currentMax = -1
-    for key, value in pixelGroups:
+    for key, value in pixelGroups.items():
         if currentMax < value:
             output = key
             currentMax = value
 
-
     return output #returns a group color
+
+def testColorGroups():
+    #load image
+    img = Image.open("ColorTest.png").convert("RGB")
+    for x in range(0,3):
+        for y in range(0,3):
+            print(str(getColorFromSubsection(img, x * 10, y * 10, 10, 10)))
+    
 
 def analyzeSkin(skin):
     #returns the group that it belongs to 
@@ -94,7 +133,6 @@ def skinMixer(filename, composite, acc):
 def main():
     #Make the "average" skin amonugst skins on skindex
     #this will eventually be a webapp (probably written rails in ruby?)
-    
     #here's the deal
     #download a bunch of skins from 
     #www.minecraftskins.com or https://namemc.com
