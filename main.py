@@ -25,7 +25,29 @@ def downloadSkin(skinID):
             r.raw.decode_content = True
             shutil.copyfileobj(r.raw, f)
     return str(skinID) + ".png"
-    
+
+def getColorGroup(pixel):
+    return pixel
+
+def getColorFromSubsection(img, x, y, height, width):
+    pixelGroups = {}
+    for xCoord in range(x, x + width):
+        for yCoord in range(y, y + height):
+            group = getColorGroup(img.getpixel((xCoord, yCoord)))
+            currval = 1
+            if group in pixelGroups:
+                currval += pixelGroups[group]
+            pixelGroups[group] = currval
+
+    output = -1
+    currentMax = -1
+    for key, value in pixelGroups:
+        if currentMax < value:
+            output = key
+            currentMax = value
+
+
+    return output #returns a group color
 
 def analyzeSkin(skin):
     #returns the group that it belongs to 
