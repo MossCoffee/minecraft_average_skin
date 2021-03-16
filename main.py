@@ -3,6 +3,7 @@ import shutil
 from PIL import Image
 import colorsys
 from enum import Enum
+from collections import defaultdict
 
 class Color(Enum):
     BLACK = 0
@@ -61,10 +62,12 @@ def getColorGroup(pixel):
     if h < 330: return Color.MAGENTA
     return Color.RED
 
-def getColorFromSubsection(img, x, y, height, width):
+def getColorFromSubsection(img, x, y, width, height):
     pixelGroups = {}
+   # print("(" + str(x) + "," + str(y) + ") - (" + str(x + width) + "," + str(y + height) + ")")
     for xCoord in range(x, x + width):
         for yCoord in range(y, y + height):
+            #print("(" + str(xCoord) + "," + str(yCoord) + ")")
             group = getColorGroup(img.getpixel((xCoord, yCoord)))
             currval = 1
             if group in pixelGroups:
@@ -80,20 +83,7 @@ def getColorFromSubsection(img, x, y, height, width):
 
     return output #returns a group color
 
-def testColorGroups():
-    #load image
-    img = Image.open("ColorTest.png").convert("RGB")
-    for x in range(0,3):
-        for y in range(0,3):
-            print(str(getColorFromSubsection(img, x * 10, y * 10, 10, 10)))
-    
-
-def analyzeSkin(skin):
-    #returns the group that it belongs to 
-    #By primary color, eye shap
-
-    #Figure out the primary color
-    
+def getMainColor(skin):
     #first, split everything into parts ie, arms, legs, jacket etc
     #Then determine the average color of that limb
     #Then determine which color is the "most"
@@ -101,6 +91,57 @@ def analyzeSkin(skin):
     #hair & face are seperate & weighted lower
     #torso & jacket are weighted higher
     #Limbs are counted as normal
+    colorDictionary = defaultdict(int)
+    
+
+    #hair
+    headSize = ((8,8))
+    colorDictionary[getColorFromSubsection(skin, 8, 0, *headSize)] += .25
+    colorDictionary[getColorFromSubsection(skin, 0, 8, *headSize)] += .25
+    colorDictionary[getColorFromSubsection(skin, 16, 8, *headSize)] += .25
+    colorDictionary[getColorFromSubsection(skin, 24, 8, *headSize)] += .25
+    print("hair")
+    #face
+    colorDictionary[getColorFromSubsection(skin, 8, 8, *headSize)] += .25
+    print("face")
+    #limbs
+    limbSize = ((16,12))
+    jointSize = ((8,4))
+    
+    #right leg
+    colorDictionary[getColorFromSubsection(skin, 0, 20, *limbSize)] += .8
+    colorDictionary[getColorFromSubsection(skin, 4, 16, *jointSize)] += .2
+
+    #left leg
+    colorDictionary[getColorFromSubsection(skin, 16, 52, *limbSize)] += .8
+    colorDictionary[getColorFromSubsection(skin, 20, 48, *jointSize)] += .2
+
+    #right arm
+    colorDictionary[getColorFromSubsection(skin, 40, 20, *limbSize)] += .8
+    colorDictionary[getColorFromSubsection(skin, 44, 16, *jointSize)] += .2
+
+    #left arm
+    colorDictionary[getColorFromSubsection(skin, 32, 52, *limbSize)] += .8
+    colorDictionary[getColorFromSubsection(skin, 36, 48, *jointSize)] += .2
+    print("limbs")
+    #torso
+    torsoSize = ((24,12))
+    hipSize = ((8,4))
+    colorDictionary[getColorFromSubsection(skin, 16, 20, *torsoSize)] += (4 * .8)
+    colorDictionary[getColorFromSubsection(skin, 20, 16, *hipSize)] += (4 * .2)
+    print("torso")
+    print(colorDictionary)
+
+    #iterate over dictionary, find max color value & return it
+
+
+def analyzeSkin(skin):
+    #returns the group that it belongs to 
+    #By primary color, eye shap
+
+    #Figure out the primary color
+    
+
     #colors have arbitrary ranges for where "red" stops and where "orange" starts for instance
 
     #Then figure out the eye pattern
@@ -111,15 +152,15 @@ def analyzeSkin(skin):
 
     #each id contains the data of both of these traits
 
-    return 0 #group ID
+    return getMainColor(skin) #group ID
 
 def mergeSkin(skin, groupId):
     if skin or groupId:
         skin = groupId
     return
     
-def skinMixer(filename, composite, acc):
-    img = Image.open(filename).convert("RGBA")
+def skinMixer(imgInput, composite, acc):
+    img = imgInput.convert("RGBA")
     (width, height) = (img.width, img.height)
     composite = composite.resize((width,height))
     alpha = 1 / acc
@@ -129,7 +170,11 @@ def skinMixer(filename, composite, acc):
     #Take that image & scale basied on the sum of transparentcies
     #Should create a completely opaque image
     return Image.blend(composite, img, alpha=alpha)
-   
+
+def getOutput(group):
+    #Get the proper output file to merge the image with 
+    return group
+
 def main():
     #Make the "average" skin amonugst skins on skindex
     #this will eventually be a webapp (probably written rails in ruby?)
@@ -138,7 +183,10 @@ def main():
     #www.minecraftskins.com or https://namemc.com
     #this is probably a webtrawler?
     #this returns a bunch of minecraft skins somehow
+    skinUrl = "testskin.png"
     
+
+
     idList = populateIds()
     #to do: make a copy of the starting file 
 
@@ -150,8 +198,12 @@ def main():
         #Analyze the skin
         #where the magic happens
         #groupId = analyzeSkin(skin)
-        skin = "minecraft_temp/" + str(id) + ".png"
-        output = skinMixer(skin, output, acc) # pass f in in
+        skinUrl = "minecraft_temp/" + str(id) + ".png"
+        skin = Image.open(skinUrl).convert("RGB")
+        group = analyzeSkin(skin)
+        
+        #pass group into output 
+        output = skinMixer(skin, getOutput(group), acc) # pass f in in
         acc += 1
         #Skins are sorted into groups and then averaged on to their group's collected image
         #mergeSkin(skin, groupId)
