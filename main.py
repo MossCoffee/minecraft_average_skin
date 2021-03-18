@@ -6,6 +6,7 @@ from enum import Enum
 from collections import defaultdict
 
 class Color(Enum):
+    NONE = -1
     BLACK = 0
     WHITE = 1
     GREY = 2
@@ -17,6 +18,8 @@ class Color(Enum):
     BLUE = 8
     MAGENTA = 9
     MULTI = 10
+
+colorImages = {}
 
 def populateIds():
     output = []
@@ -100,10 +103,8 @@ def getMainColor(skin):
     colorDictionary[getColorFromSubsection(skin, 0, 8, *headSize)] += .25
     colorDictionary[getColorFromSubsection(skin, 16, 8, *headSize)] += .25
     colorDictionary[getColorFromSubsection(skin, 24, 8, *headSize)] += .25
-    print("hair")
     #face
     colorDictionary[getColorFromSubsection(skin, 8, 8, *headSize)] += .25
-    print("face")
     #limbs
     limbSize = ((16,12))
     jointSize = ((8,4))
@@ -123,19 +124,27 @@ def getMainColor(skin):
     #left arm
     colorDictionary[getColorFromSubsection(skin, 32, 52, *limbSize)] += .8
     colorDictionary[getColorFromSubsection(skin, 36, 48, *jointSize)] += .2
-    print("limbs")
     #torso
     torsoSize = ((24,12))
     hipSize = ((8,4))
     colorDictionary[getColorFromSubsection(skin, 16, 20, *torsoSize)] += (4 * .8)
     colorDictionary[getColorFromSubsection(skin, 20, 16, *hipSize)] += (4 * .2)
-    print("torso")
-    print(colorDictionary)
 
     #iterate over dictionary, find max color value & return it
+    maxValue = -1
+    outputColor = Color.NONE
+    for ((key, value)) in colorDictionary.items():
+        if maxValue < value:
+            maxValue = value
+            outputColor = key
+    return outputColor
+
 
 
 def analyzeSkin(skin):
+    #is this an old or new skin? (check image size)
+    
+    
     #returns the group that it belongs to 
     #By primary color, eye shap
 
@@ -172,8 +181,12 @@ def skinMixer(imgInput, composite, acc):
     return Image.blend(composite, img, alpha=alpha)
 
 def getOutput(group):
-    #Get the proper output file to merge the image with 
-    return group
+    output = colorImages.get(group)
+    if output == None :
+        skinUrl = "intermediates/group_" + str(group) + ".png"
+        colorImages[group] = Image.open(skinUrl).convert("RGBA")
+        output = colorImages[group]
+    return output
 
 def main():
     #Make the "average" skin amonugst skins on skindex
@@ -183,10 +196,8 @@ def main():
     #www.minecraftskins.com or https://namemc.com
     #this is probably a webtrawler?
     #this returns a bunch of minecraft skins somehow
-    skinUrl = "testskin.png"
-    
 
-
+    ActivateSkinDownload = False
     idList = populateIds()
     #to do: make a copy of the starting file 
 
@@ -194,14 +205,15 @@ def main():
     output = Image.open("output.png").convert("RGBA")
     acc = 1
     for id in idList:
-        #skin = downloadSkin(id) #This is passed some form of id that lets it download the skin
+        if ActivateSkinDownload :
+            downloadSkin(id) #This is passed some form of id that lets it download the skin
         #Analyze the skin
         #where the magic happens
-        #groupId = analyzeSkin(skin)
         skinUrl = "minecraft_temp/" + str(id) + ".png"
-        skin = Image.open(skinUrl).convert("RGB")
+        skinBase = Image.open(skinUrl)
+
+        skin = skinBase.convert("RGB")
         group = analyzeSkin(skin)
-        
         #pass group into output 
         output = skinMixer(skin, getOutput(group), acc) # pass f in in
         acc += 1
