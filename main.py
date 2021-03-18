@@ -19,7 +19,14 @@ class Color(Enum):
     MAGENTA = 9
     MULTI = 10
 
-colorImages = {}
+class Version(Enum):
+    NOT_SKIN = -1
+    OLD = 0
+    CURRENT = 1
+
+class SkinGroup:
+    color = Color.NONE
+    version = Version.NOT_SKIN
 
 def populateIds():
     output = []
@@ -47,10 +54,8 @@ def downloadSkin(skinID):
 
 def getColorGroup(pixel):
     ((R, G, B)) = pixel
-    #print("R: " + str(R) + " G: " + str(G) + " B: " + str(B))
     ((h,l,s)) = colorsys.rgb_to_hls(R/255, G/255, B/255)
     h = h * 360
-    #print("h: " + str(h) + " l: " + str(l) + " s: " + str(s))
     if l < .2: return Color.BLACK
     if l > .8: return Color.WHITE
     
@@ -67,10 +72,8 @@ def getColorGroup(pixel):
 
 def getColorFromSubsection(img, x, y, width, height):
     pixelGroups = {}
-   # print("(" + str(x) + "," + str(y) + ") - (" + str(x + width) + "," + str(y + height) + ")")
     for xCoord in range(x, x + width):
         for yCoord in range(y, y + height):
-            #print("(" + str(xCoord) + "," + str(yCoord) + ")")
             group = getColorGroup(img.getpixel((xCoord, yCoord)))
             currval = 1
             if group in pixelGroups:
@@ -140,10 +143,17 @@ def getMainColor(skin):
     return outputColor
 
 
-
-def analyzeSkin(skin):
-    #is this an old or new skin? (check image size)
     
+def analyzeSkin(skin):
+    oldSkinSize = ((64, 32))
+    newSkinSize = ((64, 64))
+    output = SkinGroup()
+    #is this an old or new skin? (check image size)
+    if skin.size == oldSkinSize :
+        output.version = Version.OLD
+    elif skin.size == newSkinSize:
+        output.version = Version.CURRENT
+        output.color = getMainColor(skin) #group ID
     
     #returns the group that it belongs to 
     #By primary color, eye shap
@@ -161,7 +171,7 @@ def analyzeSkin(skin):
 
     #each id contains the data of both of these traits
 
-    return getMainColor(skin) #group ID
+    return output
 
 def mergeSkin(skin, groupId):
     if skin or groupId:
@@ -180,13 +190,24 @@ def skinMixer(imgInput, composite, acc):
     #Should create a completely opaque image
     return Image.blend(composite, img, alpha=alpha)
 
-def getOutput(group):
-    output = colorImages.get(group)
+def getOutput(colorImages, group):
+    output = colorImages.get(group.color)
     if output == None :
-        skinUrl = "intermediates/group_" + str(group) + ".png"
-        colorImages[group] = Image.open(skinUrl).convert("RGBA")
-        output = colorImages[group]
+        skinUrl = "intermediates/group_" + str(group.color) + ".png"
+        colorImages[group.color] = Image.open(skinUrl).convert("RGBA")
+        output = colorImages[group.color]
     return output
+
+def saveOutput(colorImages, img, group):
+    savingLocation = colorImages.get(group.color)
+    if savingLocation != None : #You've used this function wrong if we get here, but so be it
+        colorImages[group.color] = img
+
+def saveAll(colorImages):
+    for ((color, image)) in colorImages.items():
+        print("saving: " + str(color))
+        skinUrl = "intermediates/group_" + str(color) + ".png"
+        image.save(skinUrl, "png")
 
 def main():
     #Make the "average" skin amonugst skins on skindex
@@ -197,35 +218,45 @@ def main():
     #this is probably a webtrawler?
     #this returns a bunch of minecraft skins somehow
 
+    
+
+    colorImages = {}
+    colorIterator = defaultdict(int)
+
     ActivateSkinDownload = False
     idList = populateIds()
     #to do: make a copy of the starting file 
 
     #open output image
-    output = Image.open("output.png").convert("RGBA")
-    acc = 1
+    #output = Image.open("output.png").convert("RGBA")
     for id in idList:
         if ActivateSkinDownload :
             downloadSkin(id) #This is passed some form of id that lets it download the skin
         #Analyze the skin
         #where the magic happens
+        print("Processing skin #" + str(id))
         skinUrl = "minecraft_temp/" + str(id) + ".png"
         skinBase = Image.open(skinUrl)
 
         skin = skinBase.convert("RGB")
         group = analyzeSkin(skin)
+        if group.version != Version.CURRENT or group.color == Color.NONE:
+            continue
         #pass group into output 
-        output = skinMixer(skin, getOutput(group), acc) # pass f in in
-        acc += 1
+        colorIterator[group.color] += 1
+        output = skinMixer(skin, getOutput(colorImages, group), colorIterator[group.color]) 
+        #save to grouping
+        saveOutput(colorImages, output, group)
         #Skins are sorted into groups and then averaged on to their group's collected image
         #mergeSkin(skin, groupId)
 
-    output.save("output.png", "png")
+    saveAll(colorImages)
+    
     #Now we've got the skins merged into groups, 
     #We need an interface for making the skin
     #customSkinData = [0, 1, 1, 0]
     #Skin image is a png file of the created skin
-    #skinImage = skinMixer(customSkinData)
+    #skinImage = (customSkinData)
 
     #then we make a web interface to tie it all together!
 
