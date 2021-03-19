@@ -21,7 +21,7 @@ class NamemcSpider(scrapy.Spider):
 
 
     def reload_url(self, response):
-        max_ids= 100
+        max_ids= 1000
         if(len(id_dict) < max_ids): 
             yield self.parse(response)
         else:

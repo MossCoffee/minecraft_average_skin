@@ -208,7 +208,7 @@ def generateSkin(settings):
     #add up to 100
     output = Image.open("output.png").convert("RGBA")
     imagesMixed = 0
-    for value in range(Color.BLACK, Color.MAGENTA):
+    for value in range(Color.BLACK, Color.MULTI):
         mixingAmount = 0
         if settings[value] != 0:
             mixingAmount = settings[value] / (imagesMixed + settings[value])
@@ -242,7 +242,7 @@ def main():
     idList = []
 
     if(GenerateIntermediates):
-        idList = ()
+        idList = populateIds()
 
     #open output image
     #output = Image.open("output.png").convert("RGBA")
@@ -274,7 +274,7 @@ def main():
     #We need an interface for making the skin
 
     #needs 10 values
-    settings = [0.1,0.2,0.3,0.4,0,0,0,0,0,0]
+    settings = [0,0,0,0.5,0,0,0,0,0,0.5]
     generateSkin(settings)
 
     #customSkinData = [0, 1, 1, 0]
