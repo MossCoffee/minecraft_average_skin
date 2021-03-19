@@ -2,10 +2,10 @@ import requests
 import shutil
 from PIL import Image
 import colorsys
-from enum import Enum
+from enum import IntEnum
 from collections import defaultdict
 
-class Color(Enum):
+class Color(IntEnum):
     NONE = -1
     BLACK = 0
     WHITE = 1
@@ -19,7 +19,7 @@ class Color(Enum):
     MAGENTA = 9
     MULTI = 10
 
-class Version(Enum):
+class Version(IntEnum):
     NOT_SKIN = -1
     OLD = 0
     CURRENT = 1
@@ -172,18 +172,12 @@ def analyzeSkin(skin):
     #each id contains the data of both of these traits
 
     return output
-
-def mergeSkin(skin, groupId):
-    if skin or groupId:
-        skin = groupId
-    return
     
 def skinMixer(imgInput, composite, acc):
     img = imgInput.convert("RGBA")
     (width, height) = (img.width, img.height)
     composite = composite.resize((width,height))
     alpha = 1 / acc
-    #I don't think this is working properly
     #fill this in later
     #Skin data contains a num (0-1) for each generated image
     #Take that image & scale basied on the sum of transparentcies
@@ -209,6 +203,26 @@ def saveAll(colorImages):
         skinUrl = "intermediates/group_" + str(color) + ".png"
         image.save(skinUrl, "png")
 
+def generateSkin(settings):
+    #add up to 1 or 100?
+    #add up to 100
+    output = Image.open("output.png").convert("RGBA")
+    imagesMixed = 0
+    for value in range(Color.BLACK, Color.MAGENTA):
+        mixingAmount = 0
+        if settings[value] != 0:
+            mixingAmount = settings[value] / (imagesMixed + settings[value])
+            imagesMixed += settings[value]
+            skinUrl = "intermediates/group_" + str(Color(value)) + ".png"
+            intermediate = Image.open(skinUrl).convert("RGBA")
+            output = Image.blend(output, intermediate, mixingAmount).convert("RGBA")
+    
+    output.save("output.png", "png")
+    output.show()
+    
+            
+
+
 def main():
     #Make the "average" skin amonugst skins on skindex
     #this will eventually be a webapp (probably written rails in ruby?)
@@ -219,13 +233,16 @@ def main():
     #this returns a bunch of minecraft skins somehow
 
     
-
+    settings = [] #figure out what the settings need to be
     colorImages = {}
     colorIterator = defaultdict(int)
 
     ActivateSkinDownload = False
-    idList = populateIds()
-    #to do: make a copy of the starting file 
+    GenerateIntermediates = False
+    idList = []
+
+    if(GenerateIntermediates):
+        idList = ()
 
     #open output image
     #output = Image.open("output.png").convert("RGBA")
@@ -250,10 +267,16 @@ def main():
         #Skins are sorted into groups and then averaged on to their group's collected image
         #mergeSkin(skin, groupId)
 
-    saveAll(colorImages)
+    if(GenerateIntermediates):
+        saveAll(colorImages)
     
     #Now we've got the skins merged into groups, 
     #We need an interface for making the skin
+
+    #needs 10 values
+    settings = [0.1,0.2,0.3,0.4,0,0,0,0,0,0]
+    generateSkin(settings)
+
     #customSkinData = [0, 1, 1, 0]
     #Skin image is a png file of the created skin
     #skinImage = (customSkinData)
